@@ -109,6 +109,69 @@ namespace DoggisAPI.Controllers
             });
         }
 
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login([FromBody] UserLoginRequest user)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingUser = await _userManager.FindByEmailAsync(user.Email);
+
+                if (existingUser.Status == "Removed")
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>()
+                        {
+                            "Käyttäjätili on poistettu!"
+                        },
+                        Success = false
+                    });
+                }
+
+                if (existingUser == null)
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>()
+                        {
+                            "Virheellinen käyttäjätunnus tai salasana!"
+                        },
+                        Success = false
+                    });
+                }
+
+                var isCorrect = await _userManager.CheckPasswordAsync(existingUser, user.Password);
+
+                if (!isCorrect)
+                {
+                    return BadRequest(new RegistrationResponse()
+                    {
+                        Errors = new List<string>()
+                        {
+                            "Virheellinen käyttäjätunnus tai salasana!"
+                        },
+                        Success = false
+                    });
+                }
+
+                existingUser.LatestLogin = DateTime.Now;
+                var jwtToken = await GenerateJwtToken(existingUser);
+                await _doggisDBContext.SaveChangesAsync();
+
+                return Ok(jwtToken);
+            }
+
+            return BadRequest(new RegistrationResponse()
+            {
+                Errors = new List<string>()
+                {
+                    "Invalid payload"
+                },
+                Success = false
+            });
+        }
+
         private async Task<List<Claim>> GetAllValidClaims(AppUser user)
         {
             var _options = new IdentityOptions();
