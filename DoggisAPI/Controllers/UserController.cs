@@ -20,24 +20,15 @@ namespace DoggisAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserManager<AppUser> _userManager;
-        //private readonly JwtConfig _jwtConfig;
-        //private readonly TokenValidationParameters _tokenValidationParams;
         private readonly DoggisDBContext _db;
-        //private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ILogger<UserController> _logger;
 
         public UserController(
             UserManager<AppUser> userManager,
-            //RoleManager<IdentityRole> roleManager,
-            //IOptionsMonitor<JwtConfig> optionsMonitor,
-            //TokenValidationParameters tokenValidationParams,
             DoggisDBContext db,
             ILogger<UserController> logger)
         {
             _userManager = userManager;
-            //_roleManager = roleManager;
-            //_jwtConfig = optionsMonitor.CurrentValue;
-            //_tokenValidationParams = tokenValidationParams;
             _db = db;
             _logger = logger;
         }
@@ -76,5 +67,35 @@ namespace DoggisAPI.Controllers
                 Roles = roles
             });
         }
+
+        [HttpPut]
+        [Route("ChangeUserStatus/{id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        public async Task<IActionResult> ChangeUserStatus(string id, [FromBody] AppUser body)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+
+            if (user == null)
+            {
+                return BadRequest(new
+                {
+                    error = "User not found."
+                });
+            }
+
+            if (user.Status == body.Status)
+            {
+                return NoContent();
+            }
+
+            user.Status = body.Status;
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = $"User status has changed to {body.Status}"
+            });
+        }
     }
+}
 }
