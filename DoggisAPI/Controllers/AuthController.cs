@@ -251,8 +251,6 @@ namespace DoggisAPI.Controllers
                 RefreshToken = refreshToken.Token,
                 User = new UserDTO
                 {
-                    Username = user.UserName,
-                    Name = user.Name,
                     Email = user.Email,
                     Id = user.Id,
                     Roles = usersRoles
