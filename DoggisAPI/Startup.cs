@@ -76,6 +76,7 @@ namespace DoggisAPI
             });
 
             services.AddIdentity<AppUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+                    .AddErrorDescriber<CustomIdentityErrorDescriber>()
                     .AddEntityFrameworkStores<DoggisDBContext>();
 
             services.AddControllers();
